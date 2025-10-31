@@ -72,6 +72,36 @@ sequenceDiagram
 - **Visualization** – renders the result to Plotly JSON and saves a PNG snapshot to `data-plotly/` for quick review.
 - **Insights** – samples the first rows and asks the LLM for concise, actionable bullets tailored to the detected intent.
 
+## Source Layout
+```
+src/
+  __init__.py
+  main.py               # So, the entrypoint
+  graph.py              # LangGraph assembly and state transitions
+  config.py / constants.py
+  cli.py                # Typer CLI entrypoint (dataset prompts, chart links)
+  baselines.py / metrics.py
+  models/
+    state.py            # Shared AgentState TypedDict (to be upgraded later)
+  nodes/
+    __init__.py
+    prompts.py          # Centralised LLM prompt strings with some todo on better versioning ofc
+    reasoning.py        # Intent classification
+    planning.py         # SQL/chart selection
+    execution.py        # BigQuery runner + validation
+    visualization.py    # Plotly JSON + PNG generation
+    insights.py         # LLM summarisation
+  services/
+    bigquery_runner.py  # Thin BigQuery wrapper w/ limits
+    llm_client.py       # Gemini/OpenAI factory with fallback logic
+
+tests/
+  test_*.py             # Node-level smoke tests and graph compilation checks
+docs/                   # Docs, docs
+  agent_flow.png        # Generated LangGraph diagram (`make diagram`)
+  ...
+```
+
 ## Evaluation Philosophy (reasoning for evaluation container, out of MVP)
 
 Every change to the LangGraph agent should be backed by evaluation:
