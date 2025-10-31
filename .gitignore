@@ -1,3 +1,15 @@
+# Local secrets and service-account keys
+.secrets/
+data-plotly/
+client_secrets.json
+
+# Virtual environment
+venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+*.pyo
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[codz]

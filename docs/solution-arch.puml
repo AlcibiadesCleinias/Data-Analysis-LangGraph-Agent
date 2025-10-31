@@ -1,0 +1,50 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+LAYOUT_TOP_DOWN()
+
+title LangGraph Data Analysis Agent – MVP
+
+Person(user, "Analyst", "Chat query (CLI)")
+
+System_Boundary(system, "LangGraph Agent") {
+    
+    Container(cli, "CLI Interface", "typer", "Interactive REPL for queries")
+    
+    Container_Boundary(mvp_core, "🎯 MVP Agent Core\nLangGraph StateGraph") {
+        Container(state, "State", "TypedDict", "Persistent state across nodes")
+        Container(node1, "1️⃣ Reasoning", "LLM (GPT-4o-mini)", "Classify query intent")
+        Container(node2, "2️⃣ Planning", "Templates", "Select SQL template")
+        Container(node3, "3️⃣ Execution", "BigQuery", "Execute SQL, validate")
+        Container(node4, "4️⃣ Visualization", "pandas + plotly", "Generate chart")
+        Container(node5, "5️⃣ Insights", "LLM", "Summarize findings")
+    }
+    
+    Container_Boundary(eval, "Evaluation\nBaseline Comparison") {
+        Container(baseline, "Baseline Queries", ".py", "Ground truth reference")
+        Container(metrics, "Metrics", "Quality tracking", "Compare vs baseline")
+    }
+}
+
+ContainerDb(bq, "BigQuery Public", "Google BigQuery", "orders, products, users, order_items")
+System_Ext(llm, "LLM", "GPT-4o-mini or Gemini")
+
+Rel(user, cli, "enter query")
+Rel(cli, state, "init state")
+Rel(state, node1, "trigger reasoning")
+Rel(node1, llm, "LLM call")
+Rel(node1, state, "store analysis_type")
+Rel(state, node2, "trigger planning")
+Rel(node2, state, "store sql_query")
+Rel(state, node3, "trigger execution")
+Rel(node3, bq, "execute SQL")
+Rel(node3, state, "store bq_results, validation flag")
+Rel(state, node4, "IF valid: visualization")
+Rel(node4, state, "store chart_json")
+Rel(state, node5, "trigger insights")
+Rel(node5, llm, "LLM summarize")
+Rel(node5, state, "store insights")
+Rel(state, cli, "return results")
+Rel(node3, eval, "compare vs baseline")
+
+@enduml
