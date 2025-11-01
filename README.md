@@ -176,6 +176,7 @@ The CLI greets you with the dataset link and sample prompts, and prints clickabl
 - `ruff check src tests` – lint suggestions.
 
 ### TODO / Roadmap
+- add more generic approach for bigquery sql [depends on business/product req], thus, AI manages SQL requests itself and evaluate the required one for the user prompt
 - error/rate limiting fallback logic (that actually depends on functional and **non functional requirement** that should be discussed and evaluated [and that has not done to optimise timing for the task/proeject])
 - fune-tuning not covered at all, but should be a result of experiemnt/mentrics and if we have resources for that
 - Replace the `TypedDict`/dict state with dataclasses or pydantic models for stricter typing/validation.
