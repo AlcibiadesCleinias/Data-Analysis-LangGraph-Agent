@@ -12,6 +12,7 @@ Demo link: https://youtu.be/kAk0Aik8dRg
   - [System Architecture (C4, Container Level)](#system-architecture-c4-container-level)
   - [Execution Flow (Mermaid Sequence Diagram)](#execution-flow-mermaid-sequence-diagram)
 - [Component Summary](#component-summary)
+- [Source Layout](#source-layout)
 - [Evaluation Philosophy (reasoning for evaluation container, out of MVP)](#evaluation-philosophy-reasoning-for-evaluation-container-out-of-mvp)
 - [MVP Summary](#mvp-summary)
   - [LangGraph Agent Flow](#langgraph-agent-flow)
@@ -21,6 +22,7 @@ Demo link: https://youtu.be/kAk0Aik8dRg
   - [Example Prompts](#example-prompts)
   - [Tooling](#tooling)
   - [TODO / Roadmap](#todo--roadmap)
+- [Initial Challenge Description](#initial-challenge-description)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
