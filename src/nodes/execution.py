@@ -26,6 +26,7 @@ def execution_node(state: AgentState) -> AgentState:
     if not sql_query:
         state["validation_passed"] = False
         state["error_message"] = "SQL query not set"
+        state["last_execution_error"] = "SQL query not set"
         return state
 
     try:
@@ -36,10 +37,12 @@ def execution_node(state: AgentState) -> AgentState:
         metrics["latency_sec"] = 0.0
         state["metrics"] = metrics
         state["validation_passed"] = False
-        state["error_message"] = (
+        error_msg = (
             "BigQuery credentials missing. Run 'python -m src.cli auth' or set "
             "GOOGLE_APPLICATION_CREDENTIALS."
         )
+        state["error_message"] = error_msg
+        state["last_execution_error"] = error_msg
         return state
 
     metrics: Metrics = dict(state.get("metrics", {}))  # type: ignore[assignment]
@@ -52,7 +55,9 @@ def execution_node(state: AgentState) -> AgentState:
         metrics["latency_sec"] = time.perf_counter() - start_time
         state["metrics"] = metrics
         state["validation_passed"] = False
-        state["error_message"] = str(exc)
+        error_msg = str(exc)
+        state["error_message"] = error_msg
+        state["last_execution_error"] = error_msg
         return state
 
     latency = time.perf_counter() - start_time
@@ -76,11 +81,14 @@ def execution_node(state: AgentState) -> AgentState:
     state["validation_passed"] = bool(is_valid)
     if is_valid:
         state["error_message"] = None
+        state["last_execution_error"] = None
     else:
-        state["error_message"] = state.get(
+        error_msg = state.get(
             "error_message",
             "Query returned insufficient data for visualization",
         )
+        state["error_message"] = error_msg
+        state["last_execution_error"] = error_msg
 
     return state
 

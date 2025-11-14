@@ -8,8 +8,9 @@ from .models.state import AgentState
 from .nodes import (
     execution_node,
     insights_node,
-    planning_node,
     reasoning_node,
+    schema_retrieval_node,
+    sql_generation_node,
     visualization_node,
 )
 
@@ -20,13 +21,15 @@ def build_agent_graph() -> StateGraph:
     graph = StateGraph(AgentState)
 
     graph.add_node("reasoning", reasoning_node)
-    graph.add_node("planning", planning_node)
+    graph.add_node("schema_retrieval", schema_retrieval_node)
+    graph.add_node("sql_generation", sql_generation_node)
     graph.add_node("execution", execution_node)
     graph.add_node("visualization", visualization_node)
     graph.add_node("insights", insights_node)
 
-    graph.add_edge("reasoning", "planning")
-    graph.add_edge("planning", "execution")
+    graph.add_edge("reasoning", "schema_retrieval")
+    graph.add_edge("schema_retrieval", "sql_generation")
+    graph.add_edge("sql_generation", "execution")
 
     graph.add_conditional_edges(
         "execution",

@@ -17,7 +17,8 @@ def build_graph() -> Digraph:
 
     dot.node("start", "Start", shape="circle", fillcolor="#111827")
     dot.node("reasoning", "Reasoning")
-    dot.node("planning", "Planning")
+    dot.node("schema_retrieval", "Schema Retrieval")
+    dot.node("sql_generation", "SQL Generation")
     dot.node("execution", "Execution")
     dot.node("visualization", "Visualization")
     dot.node("insights", "Insights")
@@ -25,8 +26,9 @@ def build_graph() -> Digraph:
     dot.node("error_end", "Error End", shape="doublecircle", fillcolor="#ef4444")
 
     dot.edge("start", "reasoning")
-    dot.edge("reasoning", "planning")
-    dot.edge("planning", "execution")
+    dot.edge("reasoning", "schema_retrieval")
+    dot.edge("schema_retrieval", "sql_generation")
+    dot.edge("sql_generation", "execution")
     dot.edge("execution", "visualization", label="validation_passed")
     dot.edge("visualization", "insights")
     dot.edge("insights", "end")

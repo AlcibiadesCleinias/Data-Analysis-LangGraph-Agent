@@ -26,7 +26,7 @@ Demo link: https://youtu.be/kAk0Aik8dRg
 
 ## Architecture Overview
 
-The following system design to process e-commerce data from Google BigQuery and generates actionable business insights. The agent uses a linear reasoning-to-execution flow with 5 core nodes (Reasoning, Planning, Execution, Visualization, Insights) orchestrated through LangGraph's state machine.
+The following system design to process e-commerce data from Google BigQuery and generates actionable business insights. The agent uses a linear reasoning-to-execution flow with 6 core nodes (Reasoning, Schema Retrieval, SQL Generation, Execution, Visualization, Insights) orchestrated through LangGraph's state machine. The system now uses AI-driven SQL generation with schema-aware context instead of hardcoded templates.
 
 ### System Architecture (C4, Container Level)
 
@@ -44,8 +44,14 @@ sequenceDiagram
     Reasoning->>LLM: Classify intent
     LLM-->>Reasoning: analysis_type = 'product_trends'
     Reasoning-->>State: Update analysis_type
-    State->>Planning: Select strategy
-    Planning-->>State: Store SQL template, chart_type
+    State->>Schema Retrieval: Fetch metadata
+    Schema Retrieval->>BigQuery: Query INFORMATION_SCHEMA
+    BigQuery-->>Schema Retrieval: Table/column schemas
+    Schema Retrieval-->>State: Store schema_info, available_tables
+    State->>SQL Generation: Generate SQL
+    SQL Generation->>LLM: Generate SQL with schema context
+    LLM-->>SQL Generation: Generated SQL query
+    SQL Generation-->>State: Store sql_query, chart_type
     State->>Execution: Run query
     Execution->>BigQuery: Execute SQL
     BigQuery-->>Execution: Returns data (list of dicts)
@@ -67,7 +73,8 @@ sequenceDiagram
 
 ## Component Summary
 - **Reasoning** – classifies the intent using Gemini/OpenAI and records the rationale so downstream nodes can explain the plan.
-- **Planning** – swaps in one of three curated SQL templates (product trends, customer segmentation, geo analysis) and selects an appropriate chart type.
+- **Schema Retrieval** – fetches database metadata (tables, columns, types) from BigQuery INFORMATION_SCHEMA based on the analysis type, providing schema context to prevent SQL hallucination.
+- **SQL Generation** – uses LLM (gemini-1.5-pro) with schema context to dynamically generate BigQuery SQL queries tailored to the user's intent, replacing hardcoded templates with flexible AI-driven generation.
 - **Execution** – runs BigQuery with guardrails (byte caps, dataset-level joins), stores rows/columns, and computes validation metrics.
 - **Visualization** – renders the result to Plotly JSON and saves a PNG snapshot to `data-plotly/` for quick review.
 - **Insights** – samples the first rows and asks the LLM for concise, actionable bullets tailored to the detected intent.
@@ -83,11 +90,13 @@ src/
   baselines.py / metrics.py
   models/
     state.py            # Shared AgentState TypedDict (to be upgraded later)
+    sql_generation_types.py  # TypedDicts for SQL generation tracking
   nodes/
     __init__.py
     prompts.py          # Centralised LLM prompt strings with some todo on better versioning ofc
     reasoning.py        # Intent classification
-    planning.py         # SQL/chart selection
+    schema_retrieval.py # Fetch database metadata from INFORMATION_SCHEMA
+    sql_generation.py   # LLM generates SQL with schema context
     execution.py        # BigQuery runner + validation
     visualization.py    # Plotly JSON + PNG generation
     insights.py         # LLM summarisation
@@ -115,9 +124,10 @@ Every change to the LangGraph agent should be backed by evaluation:
 For the MVP only core components of digram above kept, insights:
 
 - **Dataset**: `bigquery-public-data.thelook_ecommerce`
-- **Flow**: Reasoning → Planning → Execution → Visualization → Insights implemented via LangGraph state machine.
-- **Outputs**: Plotly JSON + auto-saved PNG under `data-plotly/`, metrics (`latency_sec`, `rows_returned`, `data_completeness`), human-readable insights.
-- **LLM strategy**: Gemini default with automatic OpenAI fallback; prompts centralised in `src/nodes/prompts.py` for future versioning.
+- **Flow**: Reasoning → Schema Retrieval → SQL Generation → Execution → Visualization → Insights implemented via LangGraph state machine.
+- **SQL Generation**: AI-driven dynamic SQL generation using LLM (gemini-1.5-pro) with schema-aware context injection, replacing hardcoded templates for unlimited query flexibility.
+- **Outputs**: Plotly JSON + auto-saved PNG under `data-plotly/`, metrics (`latency_sec`, `rows_returned`, `data_completeness`, `schema_retrieval_time_ms`, `sql_generation_time_ms`), human-readable insights.
+- **LLM strategy**: Gemini default with automatic OpenAI fallback; prompts centralised in `src/nodes/prompts.py` for future versioning. SQL generation uses gemini-1.5-pro for higher quality.
 
 ### LangGraph Agent Flow
 
@@ -176,7 +186,9 @@ The CLI greets you with the dataset link and sample prompts, and prints clickabl
 - `ruff check src tests` – lint suggestions.
 
 ### TODO / Roadmap
-- add more generic approach for bigquery sql [depends on business/product req], thus, AI manages SQL requests itself and evaluate the required one for the user prompt
+- ✅ **Phase 1 Complete**: AI-driven SQL generation with schema-aware context (replaces hardcoded templates)
+- **Phase 2**: Add SQL validation (dry-run) and retry logic with error correction
+- **Phase 3**: Add feature flags for gradual rollout and enhanced error handling
 - error/rate limiting fallback logic (that actually depends on functional and **non functional requirement** that should be discussed and evaluated [and that has not done to optimise timing for the task/proeject])
 - fune-tuning not covered at all, but should be a result of experiemnt/mentrics and if we have resources for that
 - Replace the `TypedDict`/dict state with dataclasses or pydantic models for stricter typing/validation.
